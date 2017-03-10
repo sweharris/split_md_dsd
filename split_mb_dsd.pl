@@ -84,9 +84,17 @@ foreach my $dsd (<SRC/*.dsd>)
 
     # Some lines may have whitespace at the end
     $line=~s/\s+$//;
+
     if ($line=~/^${data}(.*),(.*)$/)
     {
       my ($game,$file)=($1,$2);
+
+      # These are not real game entries and just place holders
+      if ($game=~/^"?\*/)
+      {
+        print "  Skipping entry $game,$file\n";
+        next;
+      }
       $file='$.' . $file unless $file =~ /^.\./;
       $game=~s/[^A-Za-z0-9]//g;  # Make the SSD filename "safe"
       # Lower case cos FOO and foo same on Beeb.  We force comparisons
