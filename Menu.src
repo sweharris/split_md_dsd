@@ -1,0 +1,89 @@
+   10MAXROW=20
+   20MAXCOL=3:COLWIDTH=12
+   30MODE7
+   40VDU23;8202;0;0;0;0;
+   50DIM D$(256),D%(256),S%(256)
+   60X%=OPENIN("DSKDATA")
+   70N%=0
+   80REPEAT
+   90N%=N%+1
+  100INPUT#X%,D$(N%),D%(N%)
+  110S%(D%(N%))=N%:REM Link slot number to disk index number
+  120UNTIL EOF#X%
+  130CLOSE#X%
+  140MAXP%=N%/MAXCOL/MAXROW+1:REM how many pages
+  150P%=1:REM what page we are on
+  160C%=1:REM what column we are on
+  170R%=1:REM what row we are on
+  180X%=-1:REM what disk was selected
+  190ON ERROR GOTO 200
+  200*FX4,1
+  210CLOSE#0
+  220PROCshowpage(P%)
+  230REPEAT
+  240PROChighlight(C%,R%)
+  250A%=GET
+  260PROCclear(C%,R%)
+  270Q%=P%
+  280IF A%=136 THEN C%=C%-1:IF C%=0 THEN C%=MAXCOL
+  290IF A%=137 THEN C%=C%+1:IF C%>MAXCOL THEN C%=1
+  300IF A%=138 THEN R%=R%+1:IF R%>MAXROW THEN R%=1
+  310IF A%=139 THEN R%=R%-1:IF R%=0 THEN R%=MAXROW
+  320IF (A% AND 223)=78 THEN Q%=Q%+1:IF Q%>MAXP% THEN Q%=1
+  330IF (A% AND 223)=80 THEN Q%=Q%-1:IF Q%=0 THEN Q%=MAXP%
+  335IF (A% AND 223)=81 THEN MODE 7:END
+  340IF A%=13 THEN X%=FNselect(P%,C%,R%)
+  350IF A%=63 THEN PROCsearch:P%=-1:REM forces a refresh
+  360IF P%<>Q% THEN P%=Q%:PROCshowpage(P%)
+  370UNTIL X%<>-1
+  380*FX4
+  390MODE 7
+  400PRINT "You selected ";D$(X%)
+  410OSCLI("DIN 0 "+STR$(D%(X%)))
+  420OSCLI("DIN 2 "+STR$(D%(X%)+1))
+  430*RUN !BOOT
+  440END
+  450DEF PROCheader
+  460CLS
+  470REM PRINT
+  480FOR p=0 TO 1
+  490PRINT CHR$(141)CHR$(129+p*4)"BBC Micro and Electron Games Discs"
+  500NEXT
+  510ENDPROC
+  520DEF PROCshowpage(P%)
+  530LOCAL R%,C%,F%
+  540PROCheader
+  550F%=0
+  560FOR C%=1 TO MAXCOL
+  570FOR R%=1 TO MAXROW
+  580F%=(F%+1) MOD 6
+  590PRINTTAB((C%-1)*COLWIDTH+1,R%+2);CHR$(129+F%);D$((P%-1)*MAXCOL*MAXROW+R%*MAXCOL+C%-MAXCOL);
+  600NEXT
+  610NEXT
+  620PRINT '"Arrow keys, N(ext), P(prev), ?(search)";
+  630ENDPROC
+  640DEF PROChighlight(C%,R%)
+  650PRINTTAB((C%-1)*COLWIDTH,R%+2);CHR$(157);
+  660IF C%<>4 THEN PRINTTAB(C%*COLWIDTH,R%+2);CHR$(156);
+  670ENDPROC
+  680DEF PROCclear(C%,R%)
+  690PRINTTAB((C%-1)*COLWIDTH,R%+2);CHR$(156);
+  700ENDPROC
+  710DEF FNselect(P%,C%,R%)
+  720X%=(P%-1)*MAXROW*MAXCOL+(R%-1)*MAXCOL+C%
+  730IF X%>N% THEN X%=-1
+  740=X%
+  750DEF PROCsearch
+  760LOCAL X,T$,SL%,SI%,F$,X$
+  770PROCheader
+  780PRINT
+  790INPUT "Enter search: " X$
+  800IF X$="" THEN GOTO 880
+  810X=OPENIN("GAMDATA")
+  820REPEAT
+  830INPUT#X,T$,SL%,SI%,F$
+  840IF INSTR(T$,X$) THEN PRINT D$(S%(SL%));" - ";T$
+  850UNTIL EOF#X
+  860CLOSE#X
+  870INPUT "Press ENTER: " X$
+  880ENDPROC
