@@ -62,7 +62,7 @@ foreach my $dsd (<SRC/*.dsd>)
   #  This makes a "search for data" a little simpler
   my @titles;
   my %games;
-  my $rem=chr(244);  my $data=chr(220);  my $end_prog=chr(255);
+  my $rem=chr(244);  my $data=chr(220);  my $end_prog=chr(255); my $red=chr(129);
 
   my $drive=-1;
   while ($boot)
@@ -74,9 +74,9 @@ foreach my $dsd (<SRC/*.dsd>)
     my $line=substr($boot,4,$len-4);
     $boot=substr($boot,$len,-1);
     
-    if ($line=~/^${rem}".* DRIVE ([02]) /)
+    if ($line=~/^${rem}"${red}(.*DRIVE |DR\.)([02]) */)
     {
-      $drive=$1;
+      $drive=$2;
       next;
     }
 
