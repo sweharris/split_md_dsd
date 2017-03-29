@@ -2,7 +2,7 @@
 use warnings;
 use strict;
 
-use lib '/home/sweh/misc/BBC/MMB_Utils';
+use lib 'mmb_utils';
 use BeebUtils;
 
 my $TRACK_SIZE=256*10; # 10 sectors per track to split DSDs into SSDs
@@ -96,7 +96,7 @@ foreach my $dsd (<SRC/*.dsd>)
         next;
       }
       $file='$.' . $file unless $file =~ /^.\./;
-      $game=~s/[^A-Za-z0-9]//g;  # Make the SSD filename "safe"
+      $game = CleanGameName($game);
       # Lower case cos FOO and foo same on Beeb.  We force comparisons
       # to lc() versions of filenames in the DATA statements 'cos some
       # games have XYZZY in the DATA statement but may be Xyzzy on disk.
@@ -126,7 +126,7 @@ foreach my $dsd (<SRC/*.dsd>)
     BeebUtils::opt4(\$ssd,3);
     BeebUtils::set_ssd_title(\$ssd,$dtitle);
 
-    my $boot="*BASIC\r*FX21\rCLOSE#0:CHAIN \"$dtitle\"\r";
+    my $boot="*BASIC\rPAGE=&1900\r*FX21\rCLOSE#0:CHAIN \"$dtitle\"\r";
     BeebUtils::add_content_to_ssd(\$ssd,'$.!BOOT',$boot,0,0,1);
 
     my ($this_disk,$this_cat);
@@ -175,4 +175,23 @@ foreach my $dsd (<SRC/*.dsd>)
     }
   }
   print "  Saved $saved_count games\n" if $verbose;
+}
+
+sub CleanGameName
+{
+  my $game = $_[0];
+  # Remove Teletext characters from filename
+  $game=~s/[^A-Za-z0-9\s\:]//g;
+
+  # Reword filenames beginning "Adventure n: "
+  $game=~s/^(Adventure\s[0-9]+)\:\s(.*)/$2-$1/;
+
+  # Remove definite or indefinite article from start of filename
+  $game=~s/^\s*The\s//;
+  $game=~s/^\s*A\s//;
+  $game=~s/^\s*An\s//;
+
+  $game=~s/[^A-Za-z0-9\-]//g;  # Make the SSD filename "safe"
+
+  return $game;
 }
