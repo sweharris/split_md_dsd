@@ -96,7 +96,7 @@ foreach my $dsd (<SRC/*.dsd>)
         next;
       }
       $file='$.' . $file unless $file =~ /^.\./;
-      $game = CleanGameName($game);
+      $game=CleanGameName($game);
       # Lower case cos FOO and foo same on Beeb.  We force comparisons
       # to lc() versions of filenames in the DATA statements 'cos some
       # games have XYZZY in the DATA statement but may be Xyzzy on disk.
@@ -179,7 +179,7 @@ foreach my $dsd (<SRC/*.dsd>)
 
 sub CleanGameName
 {
-  my $game = $_[0];
+  my ($game)=@_;
   # Remove Teletext characters from filename
   $game=~s/[^A-Za-z0-9\s\:]//g;
 
