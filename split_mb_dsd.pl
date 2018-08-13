@@ -161,7 +161,11 @@ foreach my $dsd (<SRC/*.dsd>)
                                           $data,
                                           $this_cat->{$_}{load},
                                           $this_cat->{$_}{exec},
-                                          1);  # Always locked
+                                          $this_cat->{$_}{locked});
+                                           # lock file only if source is locked
+
+      print "  On $dsd :$side.$this_cat->{$_}{name} is unlocked\n" 
+        if ($verbose == 2 && !$this_cat->{$_}{locked});
     }
     if ($found)
     {
