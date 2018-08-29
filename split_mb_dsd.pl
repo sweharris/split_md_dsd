@@ -16,6 +16,7 @@ foreach my $dsd (<SRC/*.dsd>)
   print "Processing $dsd\n";
 
   my $disk_name=$dsd; $disk_name=~s!^.*/!!; $disk_name=~s!\.dsd$!!;
+  $disk_name=clean_disk_name($disk_name);
 
   # Load the DSD into memory
   my $src_image=BeebUtils::load_external_ssd($dsd,0);
@@ -96,7 +97,7 @@ foreach my $dsd (<SRC/*.dsd>)
         next;
       }
       $file='$.' . $file unless $file =~ /^.\./;
-      $game=CleanGameName($game);
+      $game=clean_game_name($game);
       # Lower case cos FOO and foo same on Beeb.  We force comparisons
       # to lc() versions of filenames in the DATA statements 'cos some
       # games have XYZZY in the DATA statement but may be Xyzzy on disk.
@@ -181,7 +182,7 @@ foreach my $dsd (<SRC/*.dsd>)
   print "  Saved $saved_count games\n" if $verbose;
 }
 
-sub CleanGameName
+sub clean_game_name
 {
   my ($game)=@_;
   # Remove Teletext characters from filename
@@ -198,4 +199,23 @@ sub CleanGameName
   $game=~s/[^A-Za-z0-9\-]//g;  # Make the SSD filename "safe"
 
   return $game;
+}
+
+sub clean_disk_name
+{
+  my ($diskname)=@_;
+  
+  # e.g. AltD001 -> DiscA01
+  $diskname=~s/^AltD0([0-9]{2})/DiscA$1/;
+  
+  # e.g. AltD173 -> DiscA173
+  $diskname=~s/^AltD([0-9]{3})/DiscA$1/;
+  
+  $diskname=~s/^Orig0([0-9]{2})/DiscO$1/;
+  $diskname=~s/^Orig([0-9]{3})/DiscO$1/;
+  
+  # e.g. Disc105SE -> Disc105
+  $diskname=~s/^(Disc[0-9]{3})SE/$1/;  
+    
+  return $diskname;
 }
