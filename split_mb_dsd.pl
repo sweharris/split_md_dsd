@@ -152,18 +152,22 @@ foreach my $dsd (<SRC/*.dsd>)
       $added++;
       if ($added >= 31)
       {
-        print "  WARNING: $ssdname is full.  ";
-        BeebUtils::delete_file(1,'$.!BOOT',\$ssd);
-        BeebUtils::opt4(\$ssd,0);
-        BeebUtils::compact_ssd(\$ssd);
+        print "  WARNING: $ssdname catalogue is full.  ";
+        delete_boot(\$ssd);
       }
       my $data=BeebUtils::ExtractFile($this_disk,$this_cat->{$_}{name},%$this_cat);
-      BeebUtils::add_content_to_ssd(\$ssd,$this_cat->{$_}{name},
-                                          $data,
-                                          $this_cat->{$_}{load},
-                                          $this_cat->{$_}{exec},
-                                          $this_cat->{$_}{locked});
-                                           # lock file only if source is locked
+      eval
+      {
+        add_to_disk(\$ssd,$this_cat,$_,$data);
+      };
+      # If that failed to add then maybe the disk was full; delete !BOOT
+      # and retry
+      if ($@)
+      {
+        print "  WARNING: $ssdname disk is full.  ";
+        delete_boot(\$ssd);
+        add_to_disk(\$ssd,$this_cat,$_,$data);
+      }
 
       print "  On $dsd :$side.$this_cat->{$_}{name} is unlocked\n" 
         if ($verbose == 2 && !$this_cat->{$_}{locked});
@@ -218,4 +222,23 @@ sub clean_disk_name
   $diskname=~s/^(Disc[0-9]{3})SE/$1/;  
     
   return $diskname;
+}
+
+sub delete_boot
+{
+  my ($ssd)=@_;  # Reference to the image
+  BeebUtils::delete_file(1,'$.!BOOT',$ssd);
+  BeebUtils::opt4($ssd,0);
+  BeebUtils::compact_ssd($ssd);
+}
+
+sub add_to_disk
+{
+  my ($ssd,$cat,$entry,$data)=@_;  # $ssd is a reference
+
+  BeebUtils::add_content_to_ssd($ssd,$cat->{$entry}{name},
+                                     $data,
+                                     $cat->{$entry}{load},
+                                     $cat->{$entry}{exec},
+                                     $cat->{$entry}{locked});
 }
