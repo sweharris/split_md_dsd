@@ -93,7 +93,7 @@ foreach my $dsd (<SRC/*.dsd>)
       # These are not real game entries and just place holders
       if ($game=~/^"?\*/)
       {
-        print "  Skipping entry $game,$file\n";
+        print "  Skipping entry $game,$file\n" if $verbose;
         next;
       }
       $file='$.' . $file unless $file =~ /^.\./;
