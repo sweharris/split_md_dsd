@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 use warnings;
 use strict;
+use FileHandle;
 
 use lib 'mmb_utils';
 use BeebUtils;
@@ -10,6 +11,10 @@ my $TRACK_SIZE=256*10; # 10 sectors per track to split DSDs into SSDs
 my $verbose=0;
 $verbose=1 if @ARGV && $ARGV[0] eq '-v';
 $verbose=2 if @ARGV && $ARGV[0] eq '-vv';
+
+my $rdir="RESULTS";
+
+my %skips; read_skiplist("ssd-skiplist.txt");
 
 foreach my $dsd (<SRC/*.dsd>)
 {
@@ -93,7 +98,7 @@ foreach my $dsd (<SRC/*.dsd>)
       # These are not real game entries and just place holders
       if ($game=~/^"?\*/)
       {
-        print "  Skipping entry $game,$file\n";
+        print "  Skipping entry $game,$file\n" if $verbose;
         next;
       }
       $file='$.' . $file unless $file =~ /^.\./;
@@ -114,11 +119,11 @@ foreach my $dsd (<SRC/*.dsd>)
   #  $games - Hash of startfile -> game name.
   # We have enough information now to make each SSD!
 
-  my $saved_count=0;
+  my $saved_count=0; my $skipped_count=0;
   foreach my $title (@titles)
   {
     # Remember lc() for all references to %games
-    my $ssdname="RESULTS/${disk_name}-$games{lc($title)}.ssd";
+    my $ssdname="$rdir/${disk_name}-$games{lc($title)}.ssd";
     my ($side,$start,$dtitle)=($title=~/^:(.)\.(.\.(.*))$/);
 
     my $ssd=BeebUtils::blank_ssd();
@@ -152,27 +157,39 @@ foreach my $dsd (<SRC/*.dsd>)
       $added++;
       if ($added >= 31)
       {
-        print "  WARNING: $ssdname is full.  ";
-        BeebUtils::delete_file(1,'$.!BOOT',\$ssd);
-        BeebUtils::opt4(\$ssd,0);
-        BeebUtils::compact_ssd(\$ssd);
+        print "  WARNING: $ssdname catalogue is full.  ";
+        delete_boot(\$ssd);
       }
       my $data=BeebUtils::ExtractFile($this_disk,$this_cat->{$_}{name},%$this_cat);
-      BeebUtils::add_content_to_ssd(\$ssd,$this_cat->{$_}{name},
-                                          $data,
-                                          $this_cat->{$_}{load},
-                                          $this_cat->{$_}{exec},
-                                          $this_cat->{$_}{locked});
-                                           # lock file only if source is locked
+      eval
+      {
+        add_to_disk(\$ssd,$this_cat,$_,$data);
+      };
+      # If that failed to add then maybe the disk was full; delete !BOOT
+      # and retry
+      if ($@)
+      {
+        print "  WARNING: $ssdname disk is full.  ";
+        delete_boot(\$ssd);
+        add_to_disk(\$ssd,$this_cat,$_,$data);
+      }
 
       print "  On $dsd :$side.$this_cat->{$_}{name} is unlocked\n" 
         if ($verbose == 2 && !$this_cat->{$_}{locked});
     }
     if ($found)
     {
-      BeebUtils::write_ssd(\$ssd,$ssdname);
-      print "  Saved $ssdname\n" if $verbose == 2;
-      $saved_count++;
+      if (exists $skips{$ssdname})
+      {
+        print "  Skipping $ssdname\n" if $verbose == 2;
+        $skipped_count++;
+      }
+      else
+      {
+        BeebUtils::write_ssd(\$ssd,$ssdname);
+        print "  Saved $ssdname\n" if $verbose == 2;
+        $saved_count++;
+      }
     }
     else
     {
@@ -180,6 +197,30 @@ foreach my $dsd (<SRC/*.dsd>)
     }
   }
   print "  Saved $saved_count games\n" if $verbose;
+  print "  Skipped $skipped_count games\n" if $verbose == 2;
+}
+
+sub read_skiplist # games in skiplist WON'T be output as .SSDs
+{
+  my ($skipfile)=@_;
+  if (-f $skipfile)
+  {
+    my $fh=new FileHandle "<$skipfile";
+    die "Could not open $skipfile: $!\n" unless $fh;
+  
+    my $num_skips=0;  
+    while (<$fh>)
+    {
+      chomp;
+      if ($_ ne "")
+      {
+        $skips{"$rdir/$_"}++;
+        $num_skips++;
+      }
+    }
+    close($fh) or die $!;
+    print "Read skipfile: $num_skips entries\n" if $verbose == 2;
+  }
 }
 
 sub clean_game_name
@@ -218,4 +259,23 @@ sub clean_disk_name
   $diskname=~s/^(Disc[0-9]{3})SE/$1/;  
     
   return $diskname;
+}
+
+sub delete_boot
+{
+  my ($ssd)=@_;  # Reference to the image
+  BeebUtils::delete_file(1,'$.!BOOT',$ssd);
+  BeebUtils::opt4($ssd,0);
+  BeebUtils::compact_ssd($ssd);
+}
+
+sub add_to_disk
+{
+  my ($ssd,$cat,$entry,$data)=@_;  # $ssd is a reference
+
+  BeebUtils::add_content_to_ssd($ssd,$cat->{$entry}{name},
+                                     $data,
+                                     $cat->{$entry}{load},
+                                     $cat->{$entry}{exec},
+                                     $cat->{$entry}{locked});
 }
