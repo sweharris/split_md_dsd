@@ -5,6 +5,18 @@ This code is designed to work with the perl [MMB_Utils](https://github.com/sweha
 
 On each disk image he has a !BOOT menu (a BASIC program with a *RUN wrapper) that lists each game and the program that needs to be CHAINed to start it.  He puts files on the image in a specific order.  So this program will take such an image, parse and split the DSD up into separate SSDs, one per game.
 
+This program takes some options:
+  -v (verbose)
+  -vv (very verbose)
+  -R (where to put the results; defaults to RESULTS)
+  -S (where to find the source DSDs; defaults to SRC)
+  ..filelist..  (if not specified then process everything in SRC/*.dsd)
+
+e.g.
+  split_mb_dsd.pl -S mysrc -R myres
+  split_mb_dsd.pl -R tst SRC/Disc023.dsd
+
+
 # build_mb_mmb.pl
 Convert Michael Brown's disks and create an MMB image of it.  Each DSD
 will be split into SSDs and inserted starting at slot 10 (so disk1 side 1
