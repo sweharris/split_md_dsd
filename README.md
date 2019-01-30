@@ -13,8 +13,9 @@ This program takes some options:
   ..filelist..  (if not specified then process everything in SRC/*.dsd)
 
 e.g.
-  split_mb_dsd.pl -S mysrc -R myres
-  split_mb_dsd.pl -R tst SRC/Disc023.dsd
+
+    split_mb_dsd.pl -S mysrc -R myres
+    split_mb_dsd.pl -R tst SRC/Disc023.dsd
 
 
 # build_mb_mmb.pl
