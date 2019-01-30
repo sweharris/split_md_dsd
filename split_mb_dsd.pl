@@ -13,15 +13,17 @@ my $verbose=0;
 my $veryverbose=0;
 my $resdir="RESULTS";
 my $srcdir="SRC";
+my $skipfile="";
 
 GetOptions("v"  => \$verbose,
            "vv" => \$veryverbose,
            "R=s" => \$resdir,
-           "S=s" => \$srcdir)
-or die "Syntax: $0 [-v] [-vv] [-R resultsdir] [-S srcdir] [dsd1..dsdn]\n" .
-       "     default R=RESULTS\n" .
-       "     default S=SRC\n" .
-       "     default dsd's are all those in srcdir\n" .
+           "S=s" => \$srcdir,
+           "skipfile=s" => \$skipfile)
+or die "Syntax: $0 [-v] [-vv] [--skipfile=skipfile]\n" .
+       "                [-R resultsdir] [-S srcdir] [dsd1..dsdn]\n" .
+       "     defaults R=RESULTS S=SRC\n" .
+       "     default dsd's are all those in srcdir/*.dsd\n" .
        "\n" .
        "e.g.\n" .
        "  $0 -S mysrc -R myres\n" .
@@ -34,6 +36,23 @@ my @SRCFILES=@ARGV;
 if (!@SRCFILES)
 {
   @SRCFILES=(<$srcdir/*.dsd>)
+}
+
+my %skiplist=();
+if ($skipfile)
+{
+  my $fh=new FileHandle "<$skipfile";
+  die "Could not open $skipfile: $!\n" unless $fh;
+  
+  my $num_skips=0;  
+  while (<$fh>)
+  {
+    chomp;
+    next unless $_;
+    $skiplist{"$resdir/$_"}=1;
+    $num_skips++;
+  }
+  print "Read skipfile $skipfile: $num_skips entries\n" if $verbose == 2;
 }
 
 # Make sure the target directory exists; ignore any error
@@ -143,6 +162,7 @@ foreach my $dsd (@SRCFILES)
   # We have enough information now to make each SSD!
 
   my $saved_count=0;
+  my $skipped_count=0;
   foreach my $title (@titles)
   {
     # Remember lc() for all references to %games
@@ -202,9 +222,17 @@ foreach my $dsd (@SRCFILES)
     }
     if ($found)
     {
-      BeebUtils::write_ssd(\$ssd,$ssdname);
-      print "  Saved $ssdname\n" if $verbose == 2;
-      $saved_count++;
+      if ($skiplist{$ssdname})
+      {
+        print "  Skipping $ssdname\n" if $verbose == 2;
+        $skipped_count++;
+      }
+      else
+      {
+        BeebUtils::write_ssd(\$ssd,$ssdname);
+        print "  Saved $ssdname\n" if $verbose == 2;
+        $saved_count++;
+      }
     }
     else
     {
@@ -212,6 +240,7 @@ foreach my $dsd (@SRCFILES)
     }
   }
   print "  Saved $saved_count games\n" if $verbose;
+  print "  Skipped $skipped_count games\n" if $verbose;
 }
 
 sub clean_game_name

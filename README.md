@@ -11,12 +11,14 @@ This program takes some options:
     -vv (very verbose)
     -R (where to put the results; defaults to RESULTS)
     -S (where to find the source DSDs; defaults to SRC)
+    --skipfile=filename (defaults to nothing; file lists SSDs to not create)
     ..filelist..  (if not specified then process everything in SRC/*.dsd)
 
 e.g.
 
     split_mb_dsd.pl -S mysrc -R myres
     split_mb_dsd.pl -R tst SRC/Disc023.dsd
+    split_md_dsd.pl --skiplist=ssd-skiplist.txt
 
 
 # build_mb_mmb.pl
