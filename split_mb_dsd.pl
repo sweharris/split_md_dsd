@@ -1,6 +1,8 @@
 #!/usr/bin/perl
 use warnings;
 use strict;
+use Getopt::Long;
+use File::Path;
 
 use lib 'mmb_utils';
 use BeebUtils;
@@ -8,10 +10,36 @@ use BeebUtils;
 my $TRACK_SIZE=256*10; # 10 sectors per track to split DSDs into SSDs
 
 my $verbose=0;
-$verbose=1 if @ARGV && $ARGV[0] eq '-v';
-$verbose=2 if @ARGV && $ARGV[0] eq '-vv';
+my $veryverbose=0;
+my $resdir="RESULTS";
+my $srcdir="SRC";
 
-foreach my $dsd (<SRC/*.dsd>)
+GetOptions("v"  => \$verbose,
+           "vv" => \$veryverbose,
+           "R=s" => \$resdir,
+           "S=s" => \$srcdir)
+or die "Syntax: $0 [-v] [-vv] [-R resultsdir] [-S srcdir] [dsd1..dsdn]\n" .
+       "     default R=RESULTS\n" .
+       "     default S=SRC\n" .
+       "     default dsd's are all those in srcdir\n" .
+       "\n" .
+       "e.g.\n" .
+       "  $0 -S mysrc -R myres\n" .
+       "  $0 -R tst SRC/Disc023.dsd\n";
+
+$verbose=2 if $veryverbose;
+
+# What files should we process?
+my @SRCFILES=@ARGV;
+if (!@SRCFILES)
+{
+  @SRCFILES=(<$srcdir/*.dsd>)
+}
+
+# Make sure the target directory exists; ignore any error
+mkpath($resdir);
+
+foreach my $dsd (@SRCFILES)
 {
   print "Processing $dsd\n";
 
@@ -118,7 +146,7 @@ foreach my $dsd (<SRC/*.dsd>)
   foreach my $title (@titles)
   {
     # Remember lc() for all references to %games
-    my $ssdname="RESULTS/${disk_name}-$games{lc($title)}.ssd";
+    my $ssdname="$resdir/${disk_name}-$games{lc($title)}.ssd";
     my ($side,$start,$dtitle)=($title=~/^:(.)\.(.\.(.*))$/);
 
     my $ssd=BeebUtils::blank_ssd();
