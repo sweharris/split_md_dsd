@@ -15,7 +15,7 @@
 #    never use it once the scraping is completed.
 
 rm -rf ZIPS.old PAGES
-mv ZIPS ZIPS.old
+mv ZIPS ZIPS.old 2>/dev/null
 mkdir ZIPS PAGES || exit
 cd PAGES || exit
 
