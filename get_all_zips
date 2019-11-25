@@ -1,0 +1,57 @@
+#!/bin/ksh -p
+
+rm -rf ZIPS.old PAGES
+mv ZIPS ZIPS.old
+mkdir ZIPS PAGES || exit
+cd PAGES || exit
+
+FORUM=https://www.stardot.org.uk/forums
+BASE_URLS="$FORUM/viewtopic.php?f=32&t=8270 $FORUM/viewtopic.php?f=32&t=9049"
+DOWNLOAD="$FORUM/download/file.php?id="
+PATTERNS="Disc AltD Orig"
+
+typeset -Z3 page=1
+
+for BASE_URL in $BASE_URLS
+do
+  echo Using $BASE_URL
+
+  url=$BASE_URL
+
+  while [ "$url" != "" ]
+  do
+    echo
+    echo
+    echo Getting Page $page
+    wget -q -O page$page $url
+    ls -l page$page
+    echo Searching for next page
+    next=$(sed -n 's/.*viewtopic.*start=\([0-9]*\)".*Next.*/\1/p' page$page | uniq)
+  
+    if [ -n "$next" ]
+    then
+      echo Starting at $next
+      url="$BASE_URL&start=$next"
+    else
+      url=""
+    fi
+    let page=page+1
+  done
+done
+
+echo No more pages
+echo
+
+cd ../ZIPS || exit
+
+for pattern in $PATTERNS
+do
+  echo Searching for zip files for $pattern
+
+  cat ../PAGES/page* | sed -n 's!.*download/file.php?id=\([0-9]*\).*\('$pattern'[0-9].*zip\)<.*!\1 \2!p' | while read id name
+  do
+    wget -q -O"$name" $DOWNLOAD$id
+    ls -l "$name"
+  done
+done
+
