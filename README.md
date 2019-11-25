@@ -42,3 +42,10 @@ Will do a screen scrap of the stardot forums to download the ZIP files
 
 # unzip_all
 Unzip all the files from get_all_zips and then process them with `split_mb_dsd.pl`
+
+# get_bbcmicro
+This program requests the SSD archive from bbcmicro.co.uk via the "download archive" link.  The site may cache the resulting archive for a while
+
+# compare_sites.pl
+This will compare the SSDs from Stardot to the ones on bbcmicro.co.uk and report on any differences.  This is designed to be used by the bbcmicro team to determine if an MB disk has been updated since they last updated their archive.
+It uses the `compare_sites_skiplist` to report on files to skip the comparison.
