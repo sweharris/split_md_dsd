@@ -1,4 +1,18 @@
 #!/bin/ksh -p
+#
+# In order to process the MB Zip files we need to download them.  Now
+# as MB finds bugs and fixes them then he edits the old post.  This can
+# make it hard to find the latest version.
+#
+# This script is a nasty screen scraper.  It tracks the two main threads
+# MB uses to post to, and downloads them in total.
+# Then it goes through the resulting HTML to find the links to the ZIP files
+# and downloads those.
+#
+# The resulting ZIP files are in the ZIPS directory
+# The HTML is in the PAGES directory; we keep this just in case the
+#    scraping fails, so we can look at it for diagnostics.  But we
+#    never use it once the scraping is completed.
 
 rm -rf ZIPS.old PAGES
 mv ZIPS ZIPS.old
