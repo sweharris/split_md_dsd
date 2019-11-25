@@ -1,0 +1,20 @@
+#!/bin/sh
+#
+# This will generate and download the DSD images from bbcmicro.co.uk
+#
+# We first tell it to generate the file, then we download it, then
+# we extract it
+
+rm -f BBCMicro.old
+mv BBCMicro BBCMicro.old 2>/dev/null
+mkdir BBCMicro || exit
+cd BBCMicro || exit
+
+echo Requesting archive build - may take a few minutes
+curl http://bbcmicro.co.uk/archdl.php
+echo
+echo Downloading Zip file
+wget http://bbcmicro.co.uk/tmp/BBCMicroFiles.zip
+echo
+echo Extracting contents
+unzip BBCMicroFiles.zip
