@@ -36,3 +36,9 @@ The menu program added to disk 0 from `build_mb_mmb.pl`
 
 # Menu.src
 ASCII source code to generate `Menu`
+
+# get_all_zips
+Will do a screen scrap of the stardot forums to download the ZIP files
+
+# unzip_all
+Unzip all the files from get_all_zips and then process them with `split_mb_dsd.pl`
