@@ -1,0 +1,15 @@
+#!/bin/ksh -p
+#
+# This unzips all the ZIP files we have in the ZIPS directory and creates
+# the game SSDs.  It's just a wrapper for split_mb_dsd, really!
+
+cd SRC || exit
+rm -f *.dsd
+for a in ../ZIPS/*zip
+do
+  unzip $a
+done
+
+cd .. || exit
+rm -fr RESULTS
+./split_mb_dsd.pl
