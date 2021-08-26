@@ -1,0 +1,19 @@
+#!/bin/ksh -p
+#
+# Build a list of URLs where disk image posts are
+
+PATTERNS="Disc AltD Orig"
+
+for pattern in $PATTERNS
+do
+  echo Zip files for $pattern
+  echo
+  cat PAGES/page* | sed -n -e 's!.*viewtopic.php?p=\([0-9]*\).*!LINK \1!p' -e 's!.*download/file.php?id=\([0-9]*\).*\('$pattern'[0-9].*zip\)<.*!DISC \2!p' | while read id name
+  do
+    case $id in
+      LINK) link=$name ;;
+      DISC) print "[url=/forums/viewtopic.php?p=$link#p$link]$name[/url]"
+    esac
+  done
+  echo
+done
